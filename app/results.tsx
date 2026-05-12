@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import { MarkdownText } from '../components/MarkdownText';
 import { MetricBar } from '../components/MetricBar';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { SectionCard } from '../components/SectionCard';
@@ -19,6 +20,7 @@ export default function ResultsScreen() {
   const aiHeader = report.aiNarrative?.header;
   const aiRecommendations = report.aiNarrative?.recommendations;
   const isBasicResult = tier === 'basic';
+  const recommendationLines = getRecommendationLines(report, aiRecommendations);
 
   async function handleStartPro() {
     if (isStartingPro) return;
@@ -42,9 +44,9 @@ export default function ResultsScreen() {
               <Text style={{ color: '#AAB1C3', fontWeight: '800' }} selectable>
                 {aiHeader?.eyebrow || 'Диагностика завершена'}
               </Text>
-              <Text style={{ color: colors.paper, fontSize: 32, fontWeight: '900', letterSpacing: 0 }} selectable>
+              <MarkdownText style={{ color: colors.paper, fontSize: 32, fontWeight: '900', letterSpacing: 0 }}>
                 {aiHeader?.title || `${user.fullName}, твой профиль: ${report.personalityType}`}
-              </Text>
+              </MarkdownText>
             </View>
             <View
               style={{
@@ -59,12 +61,12 @@ export default function ResultsScreen() {
               <Feather name="award" size={25} color={colors.paper} />
             </View>
           </View>
-          <Text style={{ color: '#D7DCE8', fontSize: 17, lineHeight: 25 }} selectable>
+          <MarkdownText style={{ color: '#D7DCE8', fontSize: 17, lineHeight: 25 }}>
             {aiHeader?.summary ||
               `Ты сильнее всего проявляешься через ${report.strengths
                 .map((item) => item.label.toLowerCase())
                 .join(', ')}. Подходящий учебный профиль: ${report.entProfile.label}.`}
-          </Text>
+          </MarkdownText>
         </View>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
@@ -84,24 +86,11 @@ export default function ResultsScreen() {
 
         <SectionCard eyebrow="Рекомендации" title="Куда смотреть дальше">
           <View style={{ gap: 12 }}>
-            <Text style={{ color: colors.text, fontSize: 16, lineHeight: 24 }} selectable>
-              {aiRecommendations?.subjects ||
-                `Предметы: ${report.entProfile.subjects.join(', ')}. Возможные направления: ${report.entProfile.specialties.join(', ')}.`}
-            </Text>
-            <Text style={{ color: colors.text, fontSize: 16, lineHeight: 24 }} selectable>
-              {aiRecommendations?.directions || `Возможные направления: ${report.entProfile.specialties.join(', ')}.`}
-            </Text>
-            <Text style={{ color: colors.text, fontSize: 16, lineHeight: 24 }} selectable>
-              {aiRecommendations?.motivators || `Карьерные мотиваторы: ${report.topAnchors.map((anchor) => anchor.label).join(', ')}.`}
-            </Text>
-            <Text style={{ color: colors.text, fontSize: 16, lineHeight: 24 }} selectable>
-              {aiRecommendations?.decisionStyle || `Стиль решений: ${report.cognitiveStyle}.`}
-            </Text>
-            {aiRecommendations?.nextStep ? (
-              <Text style={{ color: colors.text, fontSize: 16, lineHeight: 24 }} selectable>
-                {aiRecommendations.nextStep}
-              </Text>
-            ) : null}
+            {recommendationLines.map((line) => (
+              <MarkdownText key={line} style={{ color: colors.text, fontSize: 16, lineHeight: 24 }}>
+                {line}
+              </MarkdownText>
+            ))}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {report.recommendedClubs.map((club) => (
                 <View key={club} style={{ backgroundColor: '#EEF2FF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 }}>
@@ -117,18 +106,18 @@ export default function ResultsScreen() {
         {report.aiNarrative ? (
           <SectionCard eyebrow={report.aiGenerated ? 'AI анализ' : 'Анализ'} title="Персональный вывод">
             <View style={{ gap: 12 }}>
-              <Text style={{ color: colors.text, fontSize: 16, lineHeight: 24 }} selectable>
+              <MarkdownText style={{ color: colors.text, fontSize: 16, lineHeight: 24 }}>
                 {report.aiNarrative.profile}
-              </Text>
-              <Text style={{ color: colors.text, fontSize: 16, lineHeight: 24 }} selectable>
+              </MarkdownText>
+              <MarkdownText style={{ color: colors.text, fontSize: 16, lineHeight: 24 }}>
                 {report.aiNarrative.strengths}
-              </Text>
-              <Text style={{ color: colors.text, fontSize: 16, lineHeight: 24 }} selectable>
+              </MarkdownText>
+              <MarkdownText style={{ color: colors.text, fontSize: 16, lineHeight: 24 }}>
                 {report.aiNarrative.growth}
-              </Text>
-              <Text style={{ color: colors.text, fontSize: 16, lineHeight: 24 }} selectable>
+              </MarkdownText>
+              <MarkdownText style={{ color: colors.text, fontSize: 16, lineHeight: 24 }}>
                 {report.aiNarrative.careers}
-              </Text>
+              </MarkdownText>
             </View>
           </SectionCard>
         ) : null}
@@ -153,4 +142,27 @@ export default function ResultsScreen() {
       </View>
     </ScrollView>
   );
+}
+
+type AiRecommendations = NonNullable<NonNullable<ReturnType<typeof usePilot>['report']>['aiNarrative']>['recommendations'];
+
+function getRecommendationLines(report: NonNullable<ReturnType<typeof usePilot>['report']>, aiRecommendations: AiRecommendations) {
+  const fallback = [
+    `Фокус: ${report.entProfile.subjects.join(', ')}.`,
+    `Направления: ${report.entProfile.specialties.join(', ')}.`,
+    `Следующий шаг: выбери один пробный проект или кружок и проверь интерес на практике.`,
+  ];
+
+  if (!aiRecommendations) return fallback;
+
+  return [aiRecommendations.subjects, aiRecommendations.directions, aiRecommendations.nextStep]
+    .filter(Boolean)
+    .map((text) => getFirstSentence(text))
+    .slice(0, 3);
+}
+
+function getFirstSentence(text: string) {
+  const trimmed = text.trim();
+  const match = trimmed.match(/^.+?[.!?](?=\s|$)/);
+  return match?.[0] ?? trimmed;
 }

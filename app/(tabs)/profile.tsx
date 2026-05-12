@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { DashboardHeader } from '../../components/DashboardHeader';
+import { MarkdownText } from '../../components/MarkdownText';
 import { MetricBar } from '../../components/MetricBar';
 import { SectionCard } from '../../components/SectionCard';
 import { TalentRadar } from '../../components/TalentRadar';
@@ -63,9 +64,9 @@ export default function ProfileTab() {
         </SectionCard>
 
         <SectionCard eyebrow="Для родителей" title="Как поддержать">
-          <Text style={{ color: colors.text, fontSize: 16, lineHeight: 24 }} selectable>
+          <MarkdownText style={{ color: colors.text, fontSize: 16, lineHeight: 24 }}>
             {report.aiNarrative?.parentAdvice || report.parentTip}
-          </Text>
+          </MarkdownText>
           <Pressable disabled style={{ backgroundColor: '#F3F4F6', borderRadius: 18, paddingVertical: 13, alignItems: 'center', opacity: 0.8 }}>
             <Text style={{ color: colors.muted, fontWeight: '900' }} selectable>
               Скачать отчет · скоро

@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { DashboardHeader } from '../../components/DashboardHeader';
+import { MarkdownText } from '../../components/MarkdownText';
 import { MetricBar } from '../../components/MetricBar';
 import { PlaceholderAction } from '../../components/PlaceholderAction';
 import { SectionCard } from '../../components/SectionCard';
@@ -75,10 +76,10 @@ export default function HomeTab() {
             <Text style={{ color: '#1E3A8A', fontSize: 13, fontWeight: '900', textTransform: 'uppercase' }} selectable>
               AI Ассистент UM
             </Text>
-            <Text style={{ color: '#1D4ED8', fontSize: 14, lineHeight: 21, fontWeight: '600' }} selectable>
+            <MarkdownText style={{ color: '#1D4ED8', fontSize: 14, lineHeight: 21, fontWeight: '600' }}>
               {report.aiNarrative?.profile ||
                 `Я проанализировал твой тест. Сейчас самый сильный вектор: ${report.strengths[0]?.label.toLowerCase()}.`}
-            </Text>
+            </MarkdownText>
             <Text style={{ color: '#2563EB', fontSize: 11, fontWeight: '900', textTransform: 'uppercase' }} selectable>
               {isBasicResult ? 'Basic результат готов' : 'открыть про аналитику · скоро'}
             </Text>
