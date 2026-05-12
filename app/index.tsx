@@ -20,8 +20,8 @@ export default function PilotEntry() {
   const { report, startPilot, tier, user } = usePilot();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
-  const [age, setAge] = useState(15);
-  const [grade, setGrade] = useState(9);
+  const [age, setAge] = useState<number | null>(null);
+  const [grade, setGrade] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
   const { width } = useWindowDimensions();
@@ -30,9 +30,10 @@ export default function PilotEntry() {
   const nameValid = fullName.trim().length >= 2;
   const phoneDigits = normalizePhoneDigits(phone);
   const phoneValid = isValidPilotPhone(phone);
-  const ageValid = age >= 12 && age <= 17;
+  const gradeValid = grade !== null;
+  const ageValid = age !== null && age >= 12 && age <= 17;
 
-  const canStart = useMemo(() => nameValid && phoneValid && ageValid, [ageValid, nameValid, phoneValid]);
+  const canStart = useMemo(() => nameValid && phoneValid && gradeValid && ageValid, [ageValid, gradeValid, nameValid, phoneValid]);
 
   if (user && report) return <Redirect href="/results" />;
   if (user && tier) return <Redirect href="/diagnostic" />;
@@ -41,6 +42,7 @@ export default function PilotEntry() {
   async function handleStart() {
     setAttemptedSubmit(true);
     if (!canStart || isSubmitting) return;
+    if (age === null || grade === null) return;
     setIsSubmitting(true);
     await startPilot({
       fullName: fullName.trim(),
@@ -50,12 +52,12 @@ export default function PilotEntry() {
     });
   }
 
-  const availableAges = getAgesForGrade(grade);
+  const availableAges = grade === null ? [] : getAgesForGrade(grade);
 
   function handleGradeSelect(nextGrade: number) {
     const nextAges = getAgesForGrade(nextGrade);
     setGrade(nextGrade);
-    if (!nextAges.includes(age)) setAge(nextAges[0]);
+    if (age === null || !nextAges.includes(age)) setAge(null);
   }
 
   return (
@@ -131,9 +133,29 @@ export default function PilotEntry() {
                   showStatus={attemptedSubmit || phone.length > 0}
                   status={phoneValid ? 'valid' : 'invalid'}
                 />
-                <ToggleGroup label="Класс" options={[6, 7, 8, 9, 10, 11]} selected={grade} onSelect={handleGradeSelect} />
+                <ToggleGroup
+                  helper={grade === null ? 'Выбери класс, чтобы показать подходящий возраст.' : `${grade} класс выбран.`}
+                  label="Класс"
+                  options={[6, 7, 8, 9, 10, 11]}
+                  selected={grade}
+                  status={gradeValid ? 'valid' : attemptedSubmit ? 'invalid' : 'neutral'}
+                  onSelect={handleGradeSelect}
+                />
 
-                <ToggleGroup label="Возраст" options={availableAges} selected={age} onSelect={setAge} />
+                <ToggleGroup
+                  helper={
+                    grade === null
+                      ? 'Сначала выбери класс.'
+                      : age === null
+                        ? `Выбери возраст для ${grade} класса.`
+                        : 'Возраст подходит для выбранного класса.'
+                  }
+                  label="Возраст"
+                  options={availableAges}
+                  selected={age}
+                  status={ageValid ? 'valid' : attemptedSubmit ? 'invalid' : 'neutral'}
+                  onSelect={setAge}
+                />
 
                 <PrimaryButton
                   disabled={isSubmitting}
@@ -167,47 +189,58 @@ function PlaceholderLoginButton({ icon, label }: { icon: keyof typeof Feather.gl
 }
 
 function ToggleGroup({
+  helper,
   label,
   onSelect,
   options,
   selected,
+  status = 'neutral',
 }: {
+  helper: string;
   label: string;
   onSelect: (value: number) => void;
   options: number[];
-  selected: number;
+  selected: number | null;
+  status?: 'valid' | 'invalid' | 'neutral';
 }) {
+  const helperColor = status === 'valid' ? colors.green : status === 'invalid' ? colors.red : colors.muted;
+
   return (
     <View style={{ gap: 10 }}>
       <Text style={styles.label} selectable>
         {label}
       </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {options.map((item) => {
-          const active = selected === item;
-          return (
-            <Pressable
-              key={item}
-              onPress={() => onSelect(item)}
-              style={{
-                flexGrow: 1,
-                flexBasis: 56,
-                minHeight: 48,
-                borderRadius: 18,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: active ? colors.primary : '#F7F7FB',
-                borderWidth: 1,
-                borderColor: active ? colors.primary : '#ECEEF5',
-              }}
-            >
-              <Text style={{ color: active ? colors.paper : colors.text, fontWeight: '900' }} selectable>
-                {item}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {options.length > 0 ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {options.map((item) => {
+            const active = selected === item;
+            return (
+              <Pressable
+                key={item}
+                onPress={() => onSelect(item)}
+                style={{
+                  flexGrow: 1,
+                  flexBasis: 56,
+                  minHeight: 48,
+                  borderRadius: 18,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: active ? colors.primary : '#F7F7FB',
+                  borderWidth: 1,
+                  borderColor: active ? colors.primary : '#ECEEF5',
+                }}
+              >
+                <Text style={{ color: active ? colors.paper : colors.text, fontWeight: '900' }} selectable>
+                  {item}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+      <Text style={{ color: helperColor, fontSize: 12, fontWeight: '800' }} selectable>
+        {helper}
+      </Text>
     </View>
   );
 }
