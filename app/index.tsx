@@ -50,6 +50,14 @@ export default function PilotEntry() {
     });
   }
 
+  const availableAges = getAgesForGrade(grade);
+
+  function handleGradeSelect(nextGrade: number) {
+    const nextAges = getAgesForGrade(nextGrade);
+    setGrade(nextGrade);
+    if (!nextAges.includes(age)) setAge(nextAges[0]);
+  }
+
   return (
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: colors.primary }}>
       <LinearGradient colors={colors.gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
@@ -123,41 +131,9 @@ export default function PilotEntry() {
                   showStatus={attemptedSubmit || phone.length > 0}
                   status={phoneValid ? 'valid' : 'invalid'}
                 />
-                <ToggleGroup
-                  label="Возраст"
-                  options={[12, 13, 14, 15, 16, 17]}
-                  selected={age}
-                  onSelect={setAge}
-                />
+                <ToggleGroup label="Класс" options={[6, 7, 8, 9, 10, 11]} selected={grade} onSelect={handleGradeSelect} />
 
-                <View style={{ gap: 10 }}>
-                  <Text style={styles.label} selectable>
-                    Класс
-                  </Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                    {[6, 7, 8, 9, 10, 11].map((item) => (
-                      <Pressable
-                        key={item}
-                        onPress={() => setGrade(item)}
-                        style={{
-                          flexGrow: 1,
-                          flexBasis: 56,
-                          minHeight: 48,
-                          borderRadius: 18,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: grade === item ? colors.primary : '#F7F7FB',
-                          borderWidth: 1,
-                          borderColor: grade === item ? colors.primary : '#ECEEF5',
-                        }}
-                      >
-                        <Text style={{ color: grade === item ? colors.paper : colors.text, fontWeight: '900' }} selectable>
-                          {item}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
+                <ToggleGroup label="Возраст" options={availableAges} selected={age} onSelect={setAge} />
 
                 <PrimaryButton
                   disabled={isSubmitting}
@@ -326,6 +302,18 @@ function formatPilotPhone(value: string) {
 function isValidPilotPhone(value: string) {
   const digits = normalizePhoneDigits(value);
   return digits.length === 11 && digits.startsWith('7');
+}
+
+function getAgesForGrade(grade: number) {
+  const agesByGrade: Record<number, number[]> = {
+    6: [12, 13],
+    7: [13, 14],
+    8: [14, 15],
+    9: [15, 16],
+    10: [16, 17],
+    11: [17],
+  };
+  return agesByGrade[grade] ?? [12, 13, 14, 15, 16, 17];
 }
 
 const styles = {
