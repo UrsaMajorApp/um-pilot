@@ -153,10 +153,47 @@ function rankedScores(normalized: Record<ScoreKey, number>) {
 }
 
 function getPersonalityType(normalized: Record<ScoreKey, number>) {
-  if (normalized.leadership >= 65 && normalized.teamwork >= 55) return 'Координатор команды';
-  if (normalized.analytical >= 65 && normalized.attention >= 55) return 'Системный аналитик';
-  if (normalized.autonomy >= 60 && normalized.growth_mindset >= 55) return 'Самостоятельный исследователь';
-  if (normalized.teamwork >= 60) return 'Командный партнер';
+  const candidates = [
+    {
+      label: 'Коммуникатор-медиатор',
+      value: Math.round((normalized.mediation + normalized.iq_verbal + normalized.ent_humanities + normalized.teamwork) / 4),
+      min: 48,
+    },
+    {
+      label: 'Технарь-исследователь',
+      value: Math.round((normalized.ent_mathphys + normalized.iq_analytical + normalized.analytical + normalized.attention) / 4),
+      min: 44,
+    },
+    {
+      label: 'Естественно-научный исследователь',
+      value: Math.round((normalized.ent_chembio + normalized.analytical + normalized.attention + normalized.perseverance) / 4),
+      min: 42,
+    },
+    {
+      label: 'Инициатор проектов',
+      value: Math.round((normalized.leadership + normalized.autonomy + normalized.growth_mindset + normalized.stress_tolerance) / 4),
+      min: 46,
+    },
+    {
+      label: 'Командный драйвер',
+      value: Math.round((normalized.stress_tolerance + normalized.perseverance + normalized.teamwork + normalized.leadership) / 4),
+      min: 46,
+    },
+    {
+      label: 'Надежный систематизатор',
+      value: Math.round((normalized.attention + normalized.perseverance + normalized.honesty + normalized.analytical) / 4),
+      min: 46,
+    },
+  ]
+    .filter((candidate) => candidate.value >= candidate.min)
+    .sort((a, b) => b.value - a.value);
+
+  if (candidates[0]) return candidates[0].label;
+  if (normalized.ent_mathphys >= normalized.ent_humanities && normalized.ent_mathphys >= normalized.ent_chembio) {
+    return 'Практичный технарь';
+  }
+  if (normalized.ent_chembio >= normalized.ent_humanities) return 'Наблюдательный естественник';
+  if (normalized.ent_humanities >= 35) return 'Гуманитарий-коммуникатор';
   return 'Гибкий практик';
 }
 
@@ -166,6 +203,12 @@ function getRecommendedClubs(report: {
   normalizedScores: Record<ScoreKey, number>;
 }) {
   const clubs = new Set<string>();
+  const activeTeamSignal =
+    report.normalizedScores.stress_tolerance >= 45 &&
+    (report.normalizedScores.perseverance >= 35 ||
+      report.normalizedScores.teamwork >= 35 ||
+      report.normalizedScores.leadership >= 35);
+
   if (report.entProfile.key === 'mathphys') {
     clubs.add('Робототехника и Arduino');
     clubs.add('Python для анализа данных');
@@ -178,6 +221,7 @@ function getRecommendedClubs(report: {
     clubs.add('Медиа и сторителлинг');
     clubs.add('Дебаты и публичные выступления');
   }
+  if (activeTeamSignal) clubs.add('Спортивные проекты и командные игры');
   if (report.topAnchors.some((anchor) => anchor.key === 'entrepreneurship')) clubs.add('Стартап-лаборатория');
   if (report.normalizedScores.leadership > 60) clubs.add('Лидерская проектная группа');
   return Array.from(clubs).slice(0, 4);

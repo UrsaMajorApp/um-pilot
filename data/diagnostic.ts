@@ -32,6 +32,9 @@ export type ModuleKey = 'basic' | 'mail' | 'chat' | 'tasks';
 export type Scores = Record<ScoreKey, number>;
 export type AnchorScores = Record<AnchorKey, number>;
 
+export const BASIC_PILOT_QUESTION_LIMIT = 20;
+export const PRO_PILOT_QUESTION_LIMIT = 20;
+
 export type PilotOption = {
   id: 'v1' | 'v2' | 'v3';
   text: string;
@@ -286,12 +289,12 @@ export const pilotQuestions: PilotQuestion[] = [
     id: 'P17',
     module: 'chat',
     from: 'Макс',
-    subject: 'Без выходных',
-    prompt: 'Я уже третью неделю работаю без выходных. Нормально это?',
+    subject: 'Вечер после проекта',
+    prompt: 'После насыщенного дня у тебя свободный вечер. Что скорее выберешь?',
     options: [
-      { id: 'v1', text: 'Иногда так бывает, потерпи.', deltas: {} },
-      { id: 'v2', text: 'Скажи руководителю, это важно для твоего здоровья.', deltas: { teamwork: 10 } },
-      { id: 'v3', text: 'Ты сам выбрал эту работу.', deltas: {} },
+      { id: 'v1', text: 'Тренировку, игру или активную прогулку.', deltas: { stress_tolerance: 10, perseverance: 10, teamwork: 5 } },
+      { id: 'v2', text: 'Спокойно восстановиться и выспаться.', deltas: { attention: 5 } },
+      { id: 'v3', text: 'Доделать личный проект, пока есть энергия.', deltas: { autonomy: 5, analytical: 5 } },
     ],
   },
   {
@@ -894,6 +897,14 @@ export function getAgeGroup(age: number): AgeGroup {
 }
 
 export function getPilotQuestions(ageGroup: AgeGroup, tier: TestTier): PilotQuestion[] {
-  if (ageGroup === '12-14') return tier === 'basic' ? basicQuestions1214 : proQuestions1214;
-  return tier === 'basic' ? basicQuestions1517 : pilotQuestions;
+  const questions =
+    ageGroup === '12-14'
+      ? tier === 'basic'
+        ? basicQuestions1214
+        : proQuestions1214
+      : tier === 'basic'
+        ? basicQuestions1517
+        : pilotQuestions;
+
+  return questions.slice(0, tier === 'basic' ? BASIC_PILOT_QUESTION_LIMIT : PRO_PILOT_QUESTION_LIMIT);
 }

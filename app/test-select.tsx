@@ -3,6 +3,7 @@ import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { getAgeGroup, getPilotQuestions } from '../data/diagnostic';
 import { usePilot } from '../lib/pilot-store';
 import { colors, shadows } from '../lib/theme';
 
@@ -13,6 +14,10 @@ export default function TestSelectScreen() {
   if (!user) return <Redirect href="/" />;
   if (report) return <Redirect href="/results" />;
   if (tier) return <Redirect href="/diagnostic" />;
+
+  const selectedAgeGroup = ageGroup ?? getAgeGroup(user.age);
+  const basicCount = getPilotQuestions(selectedAgeGroup, 'basic').length;
+  const proCount = getPilotQuestions(selectedAgeGroup, 'pro').length;
 
   async function handleStart(nextTier: 'basic' | 'pro') {
     if (startingTier) return;
@@ -29,7 +34,7 @@ export default function TestSelectScreen() {
         <View style={{ alignSelf: 'center', width: '100%', maxWidth: 980, gap: 18 }}>
           <View style={{ gap: 8 }}>
             <Text style={{ color: colors.violet, fontSize: 13, fontWeight: '900', textTransform: 'uppercase' }} selectable>
-              {ageGroup === '12-14' ? '12-14 лет' : '15-17 лет'} · пилот UM
+              {selectedAgeGroup === '12-14' ? '12-14 лет' : '15-17 лет'} · пилот UM
             </Text>
             <Text style={{ color: colors.text, fontSize: 36, lineHeight: 42, fontWeight: '900' }} selectable>
               Выбери формат диагностики
@@ -45,7 +50,7 @@ export default function TestSelectScreen() {
               disabled={Boolean(startingTier)}
               icon="zap"
               loading={startingTier === 'basic'}
-              meta={ageGroup === '12-14' ? '24 карточки RIASEC' : '24 карточки карьерных якорей'}
+              meta={selectedAgeGroup === '12-14' ? `${basicCount} карточек RIASEC` : `${basicCount} карточек карьерных якорей`}
               title="Пройти тест Basic"
               onPress={() => handleStart('basic')}
             />
@@ -54,7 +59,7 @@ export default function TestSelectScreen() {
               disabled={Boolean(startingTier)}
               icon="award"
               loading={startingTier === 'pro'}
-              meta={ageGroup === '12-14' ? '30 вопросов · хакатон' : '30 вопросов · первый день стажера'}
+              meta={selectedAgeGroup === '12-14' ? `${proCount} вопросов · хакатон` : `${proCount} вопросов · первый день стажера`}
               title="Пройти тест PRO"
               onPress={() => handleStart('pro')}
             />
