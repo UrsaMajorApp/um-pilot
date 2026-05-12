@@ -1,5 +1,6 @@
 import { Feather } from '@expo/vector-icons';
-import { ScrollView, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { DashboardHeader } from '../../components/DashboardHeader';
 import { MetricBar } from '../../components/MetricBar';
 import { PlaceholderAction } from '../../components/PlaceholderAction';
@@ -8,12 +9,20 @@ import { usePilot } from '../../lib/pilot-store';
 import { colors, shadows } from '../../lib/theme';
 
 export default function HomeTab() {
-  const { report, user } = usePilot();
+  const { report, startDiagnostic, tier, user } = usePilot();
+  const [isStartingPro, setIsStartingPro] = useState(false);
   if (!report || !user) return null;
 
+  const isBasicResult = tier === 'basic';
   const energy = Math.round(
     report.strengths.reduce((sum, item) => sum + item.value, 0) / Math.max(1, report.strengths.length)
   );
+
+  async function handleStartPro() {
+    if (isStartingPro) return;
+    setIsStartingPro(true);
+    await startDiagnostic('pro');
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
@@ -35,7 +44,19 @@ export default function HomeTab() {
           <PlaceholderAction color="#10B981" icon="target" label="Задания" />
         </View>
 
-        <View style={{ ...shadows.sm, backgroundColor: '#EFF6FF', borderRadius: 32, borderWidth: 1, borderColor: '#DBEAFE', padding: 20, flexDirection: 'row', gap: 14 }}>
+        <View
+          style={{
+            ...shadows.sm,
+            backgroundColor: '#EFF6FF',
+            borderRadius: 32,
+            borderWidth: 1,
+            borderColor: '#DBEAFE',
+            padding: 20,
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 14,
+          }}
+        >
           <View
             style={{
               width: 48,
@@ -50,7 +71,7 @@ export default function HomeTab() {
           >
             <Feather name="cpu" size={23} color="#3B82F6" />
           </View>
-          <View style={{ flex: 1, gap: 6 }}>
+          <View style={{ flex: 1, minWidth: 220, gap: 6 }}>
             <Text style={{ color: '#1E3A8A', fontSize: 13, fontWeight: '900', textTransform: 'uppercase' }} selectable>
               AI Ассистент UM
             </Text>
@@ -59,9 +80,32 @@ export default function HomeTab() {
                 `Я проанализировал твой тест. Сейчас самый сильный вектор: ${report.strengths[0]?.label.toLowerCase()}.`}
             </Text>
             <Text style={{ color: '#2563EB', fontSize: 11, fontWeight: '900', textTransform: 'uppercase' }} selectable>
-              открыть про аналитику · скоро
+              {isBasicResult ? 'Basic результат готов' : 'открыть про аналитику · скоро'}
             </Text>
           </View>
+          {isBasicResult ? (
+            <Pressable
+              disabled={isStartingPro}
+              onPress={handleStartPro}
+              style={({ pressed }) => ({
+                alignSelf: 'center',
+                minHeight: 46,
+                borderRadius: 16,
+                backgroundColor: '#2563EB',
+                opacity: isStartingPro ? 0.55 : pressed ? 0.86 : 1,
+                paddingHorizontal: 18,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 8,
+              })}
+            >
+              <Feather name="award" size={17} color={colors.paper} />
+              <Text style={{ color: colors.paper, fontSize: 14, fontWeight: '900' }} selectable>
+                {isStartingPro ? 'Открываем PRO...' : 'Пройти PRO тест'}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>

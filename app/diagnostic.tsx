@@ -11,13 +11,14 @@ export default function DiagnosticScreen() {
   const { ageGroup, answerQuestion, currentIndex, questionCount, report, tier, user } = usePilot();
   const [questionStartedAt, setQuestionStartedAt] = useState(Date.now());
   const [isSaving, setIsSaving] = useState(false);
+  const [isCompletingFinalAnswer, setIsCompletingFinalAnswer] = useState(false);
   const questions = useMemo(() => (ageGroup && tier ? getPilotQuestions(ageGroup, tier) : []), [ageGroup, tier]);
   const question = questions[currentIndex];
   const progress = Math.round(((currentIndex + 1) / Math.max(1, questions.length)) * 100);
   const { width } = useWindowDimensions();
   const isWide = width >= 860;
   const isCompact = width < 560;
-  const isFinalAnalysis = isSaving && currentIndex >= questions.length - 1;
+  const isFinalAnalysis = isSaving && isCompletingFinalAnswer;
 
   const moduleLabel = useMemo(() => {
     if (question?.module === 'basic') return tier === 'basic' ? 'Basic тест' : 'Карточки';
@@ -36,10 +37,13 @@ export default function DiagnosticScreen() {
     if (isSaving) return;
     const option = question.options.find((item) => item.id === optionId);
     if (!option) return;
+    const isFinalAnswer = currentIndex >= questions.length - 1;
+    setIsCompletingFinalAnswer(isFinalAnswer);
     setIsSaving(true);
     const isLast = await answerQuestion(option, Date.now() - questionStartedAt);
     setQuestionStartedAt(Date.now());
     setIsSaving(false);
+    if (!isLast) setIsCompletingFinalAnswer(false);
     if (isLast) router.replace('/results');
   }
 
