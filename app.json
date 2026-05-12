@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Ursa Major Pilot",
+    "slug": "um-pilot",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "umpilot",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.ursamajor.pilot",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.ursamajor.pilot",
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "server"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
