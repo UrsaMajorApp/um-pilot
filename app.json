@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "Ursa Major Pilot",
+    "owner": "ursamajor",
     "slug": "um-pilot",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -20,9 +21,17 @@
       "bundler": "metro",
       "output": "server"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router"
+    ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5569f752-0de7-48d8-8781-23d752dea849"
+      }
     }
   }
 }
