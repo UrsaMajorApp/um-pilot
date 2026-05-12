@@ -5,8 +5,9 @@ import { usePilot } from '../../lib/pilot-store';
 import { colors, shadows } from '../../lib/theme';
 
 export default function CoursesTab() {
-  const { report } = usePilot();
+  const { ageGroup, report, user } = usePilot();
   const courses = report?.recommendedClubs ?? [];
+  const ageTag = ageGroup ? `${ageGroup} лет` : user ? `${user.age} лет` : 'пилот';
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
@@ -64,7 +65,7 @@ export default function CoursesTab() {
             </View>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {['Алматы', '15-17 лет', 'по рекомендации AI'].map((tag) => (
+              {['Алматы', ageTag, 'по рекомендации AI'].map((tag) => (
                 <View key={tag} style={{ backgroundColor: '#F7F7FB', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 }}>
                   <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '800' }} selectable>
                     {tag}
