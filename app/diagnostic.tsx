@@ -1,7 +1,9 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { SwipeableDecisionCard } from '../components/SwipeableDecisionCard';
 import { getPilotQuestions, type PilotQuestion } from '../data/diagnostic';
 import { usePilot } from '../lib/pilot-store';
 import { colors } from '../lib/theme';
@@ -71,34 +73,59 @@ export default function DiagnosticScreen() {
             </View>
           </View>
 
-          {question.module === 'basic' ? (
-            <BasicQuestion question={question} isCompact={isCompact} isSaving={isSaving} onAnswer={handleAnswer} />
-          ) : null}
-          {question.module === 'mail' ? (
-            <MailQuestion
-              question={question}
-              isCompact={isCompact}
-              isSaving={isSaving}
-              isWide={isWide}
-              onAnswer={handleAnswer}
-            />
-          ) : null}
-          {question.module === 'chat' ? (
-            <ChatQuestion question={question} isCompact={isCompact} isSaving={isSaving} onAnswer={handleAnswer} />
-          ) : null}
-          {question.module === 'tasks' ? (
-            <TaskQuestion
-              question={question}
-              isCompact={isCompact}
-              isSaving={isSaving}
-              isWide={isWide}
-              onAnswer={handleAnswer}
-            />
-          ) : null}
+          <AnimatedQuestionFrame questionKey={question.id}>
+            {question.module === 'basic' ? (
+              <BasicQuestion question={question} isCompact={isCompact} isSaving={isSaving} onAnswer={handleAnswer} />
+            ) : null}
+            {question.module === 'mail' ? (
+              <MailQuestion
+                question={question}
+                isCompact={isCompact}
+                isSaving={isSaving}
+                isWide={isWide}
+                onAnswer={handleAnswer}
+              />
+            ) : null}
+            {question.module === 'chat' ? (
+              <ChatQuestion question={question} isCompact={isCompact} isSaving={isSaving} onAnswer={handleAnswer} />
+            ) : null}
+            {question.module === 'tasks' ? (
+              <TaskQuestion
+                question={question}
+                isCompact={isCompact}
+                isSaving={isSaving}
+                isWide={isWide}
+                onAnswer={handleAnswer}
+              />
+            ) : null}
+          </AnimatedQuestionFrame>
         </View>
       </ScrollView>
     </View>
   );
+}
+
+function AnimatedQuestionFrame({ children, questionKey }: { children: ReactNode; questionKey: string }) {
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.97);
+  const translateY = useSharedValue(16);
+
+  useEffect(() => {
+    void questionKey;
+    opacity.value = 0;
+    scale.value = 0.97;
+    translateY.value = 16;
+    opacity.value = withTiming(1, { duration: 220 });
+    scale.value = withSpring(1, { damping: 18, stiffness: 190 });
+    translateY.value = withSpring(0, { damping: 18, stiffness: 190 });
+  }, [opacity, questionKey, scale, translateY]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
+  }));
+
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
 }
 
 function FinalAnalysisLoading({ isCompact, questionCount }: { isCompact: boolean; questionCount: number }) {
@@ -192,68 +219,78 @@ function BasicQuestion({
 }) {
   return (
     <View style={{ alignItems: 'center' }}>
-      <View
-        style={{
-          width: '100%',
-          maxWidth: 640,
-          minHeight: isCompact ? 440 : 520,
-          backgroundColor: '#191C25',
-          borderRadius: 8,
-          padding: isCompact ? 18 : 24,
-          justifyContent: 'space-between',
-          gap: 20,
-          borderWidth: 1,
-          borderColor: '#272C3B',
-        }}
-      >
-        <View style={{ gap: 10 }}>
-          <Text style={{ color: colors.violet, fontSize: 13, fontWeight: '900', textTransform: 'uppercase' }} selectable>
-            {question.subject}
-          </Text>
-          <Text
-            style={{
-              color: colors.paper,
-              fontSize: isCompact ? 34 : 44,
-              lineHeight: isCompact ? 40 : 50,
-              fontWeight: '900',
-            }}
-            selectable
-          >
-            {question.prompt}
-          </Text>
-        </View>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <Pressable
-            disabled={isSaving}
-            onPress={() => onAnswer('v1')}
-            style={({ pressed }) => ({
-              flex: 1,
-              minHeight: 64,
-              borderRadius: 999,
-              backgroundColor: pressed ? '#2B3040' : '#222737',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: isSaving ? 0.5 : 1,
-            })}
-          >
-            <Feather name="x" size={26} color="#F87171" />
-          </Pressable>
-          <Pressable
-            disabled={isSaving}
-            onPress={() => onAnswer('v2')}
-            style={({ pressed }) => ({
-              flex: 1,
-              minHeight: 64,
-              borderRadius: 999,
-              backgroundColor: pressed ? '#4F46E5' : colors.violet,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: isSaving ? 0.5 : 1,
-            })}
-          >
-            <Feather name="heart" size={26} color={colors.paper} />
-          </Pressable>
-        </View>
+      <View style={{ width: '100%', maxWidth: 640 }}>
+        <SwipeableDecisionCard
+          cardKey={question.id}
+          dislikeLabel="НЕТ"
+          likeLabel="ДА"
+          onSwipe={(liked) => onAnswer(liked ? 'v2' : 'v1')}
+        >
+          {({ isLeaving, swipe }) => (
+            <View
+              style={{
+                width: '100%',
+                minHeight: isCompact ? 440 : 520,
+                backgroundColor: '#191C25',
+                borderRadius: 8,
+                padding: isCompact ? 18 : 24,
+                justifyContent: 'space-between',
+                gap: 20,
+                borderWidth: 1,
+                borderColor: '#272C3B',
+              }}
+            >
+              <View style={{ gap: 10 }}>
+                <Text style={{ color: colors.violet, fontSize: 13, fontWeight: '900', textTransform: 'uppercase' }} selectable>
+                  {question.subject}
+                </Text>
+                <Text
+                  style={{
+                    color: colors.paper,
+                    fontSize: isCompact ? 34 : 44,
+                    lineHeight: isCompact ? 40 : 50,
+                    fontWeight: '900',
+                  }}
+                  selectable
+                >
+                  {question.prompt}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <Pressable
+                  disabled={isSaving || isLeaving}
+                  onPress={() => swipe(false)}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minHeight: 64,
+                    borderRadius: 999,
+                    backgroundColor: pressed ? '#2B3040' : '#222737',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: isSaving || isLeaving ? 0.5 : 1,
+                  })}
+                >
+                  <Feather name="x" size={26} color="#F87171" />
+                </Pressable>
+                <Pressable
+                  disabled={isSaving || isLeaving}
+                  onPress={() => swipe(true)}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minHeight: 64,
+                    borderRadius: 999,
+                    backgroundColor: pressed ? '#4F46E5' : colors.violet,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: isSaving || isLeaving ? 0.5 : 1,
+                  })}
+                >
+                  <Feather name="heart" size={26} color={colors.paper} />
+                </Pressable>
+              </View>
+            </View>
+          )}
+        </SwipeableDecisionCard>
       </View>
     </View>
   );
@@ -268,23 +305,36 @@ function AnswerButton({
   label: string;
   onPress: () => void;
 }) {
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <Pressable
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => ({
-        backgroundColor: pressed ? '#ECEEFF' : colors.paper,
-        borderRadius: 8,
-        padding: 15,
-        borderWidth: 1,
-        borderColor: '#DDE3F0',
-        opacity: disabled ? 0.5 : 1,
-      })}
-    >
-      <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', lineHeight: 21 }} selectable>
-        {label}
-      </Text>
-    </Pressable>
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        disabled={disabled}
+        onPress={onPress}
+        onPressIn={() => {
+          scale.value = withSpring(0.985, { damping: 18, stiffness: 260 });
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1, { damping: 18, stiffness: 260 });
+        }}
+        style={({ pressed }) => ({
+          backgroundColor: pressed ? '#ECEEFF' : colors.paper,
+          borderRadius: 8,
+          padding: 15,
+          borderWidth: 1,
+          borderColor: pressed ? '#BFC7FF' : '#DDE3F0',
+          opacity: disabled ? 0.5 : 1,
+        })}
+      >
+        <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700', lineHeight: 21 }} selectable>
+          {label}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
