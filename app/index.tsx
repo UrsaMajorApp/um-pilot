@@ -163,28 +163,12 @@ export default function PilotEntry() {
                   label={isSubmitting ? 'Запускаем...' : canStart ? 'Начать путь' : 'Проверить данные'}
                   onPress={handleStart}
                 />
-
-                <View style={{ gap: 8 }}>
-                  <PlaceholderLoginButton icon="mail" label="Войти по email" />
-                  <PlaceholderLoginButton icon="grid" label="QR вход" />
-                </View>
               </View>
             </View>
           </ScrollView>
         </SafeAreaView>
       </LinearGradient>
     </KeyboardAvoidingView>
-  );
-}
-
-function PlaceholderLoginButton({ icon, label }: { icon: keyof typeof Feather.glyphMap; label: string }) {
-  return (
-    <Pressable disabled style={styles.placeholderButton}>
-      <Feather name={icon} size={17} color={colors.muted} />
-      <Text style={{ color: colors.muted, fontSize: 13, fontWeight: '800' }} selectable>
-        {label} · скоро
-      </Text>
-    </Pressable>
   );
 }
 
@@ -407,18 +391,6 @@ const styles = {
     fontWeight: '900' as const,
     color: colors.paper,
     letterSpacing: 0,
-  },
-  placeholderButton: {
-    minHeight: 44,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#ECEEF5',
-    backgroundColor: '#FAFAFD',
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    gap: 8,
-    opacity: 0.72,
   },
 };
 
