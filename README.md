@@ -2,6 +2,16 @@
 
 Standalone stripped-down demo for the school pilot.
 
+Production web: https://um-pilot.expo.app
+
+## Pilot flow
+
+- Registration accepts name, phone, age 12-17, and class.
+- Age 12-14 uses the hackathon-style Basic/PRO tests.
+- Age 15-17 uses the career-anchor Basic test and the "Первый день стажера" PRO test.
+- After Basic results, the participant can start PRO or open the UM overview.
+- After PRO results, the participant can open the UM overview.
+
 ## Run locally
 
 ```sh
@@ -67,6 +77,21 @@ The pilot writes only to the pilot project:
 ## AI behavior
 
 The client builds a deterministic report first. Then it invokes the `analyze-diagnostic` Edge Function. If AI fails or times out, the user still gets results and the app preview works.
+
+## Web deployment
+
+This project is linked to EAS as `@ursamajor/um-pilot`.
+
+```sh
+pnpm web:export
+pnpm exec eas deploy --prod --non-interactive
+```
+
+GitHub Actions deploys from `main` after these repository secrets are configured:
+
+- `EXPO_TOKEN`
+- `EXPO_PUBLIC_PILOT_SUPABASE_URL`
+- `EXPO_PUBLIC_PILOT_SUPABASE_ANON_KEY`
 
 ## Troubleshooting RLS errors
 
